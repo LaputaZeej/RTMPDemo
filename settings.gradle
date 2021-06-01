@@ -1,0 +1,4 @@
+include ':common'
+include ':rtmp_show'
+include ':app'
+rootProject.name = "rtmp_cam"
