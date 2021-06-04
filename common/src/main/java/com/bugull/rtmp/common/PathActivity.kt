@@ -46,6 +46,7 @@ abstract class PathActivity(private val permissions: Array<String>) : AppCompatA
     private val defaultPathList = listOf(
         PathData("本地1", "rtmp://192.168.199.144/laputa/abcd"),
         PathData("远程1", "rtmp://121.40.115.131:11835/live/abcd"),
+        PathData("远程2", "rtmp://116.62.121.230:11835/myapp/abcd"),
         PathData("斗鱼(直播码会刷新)",
             "rtmp://sendtc3a.douyu.com/live/9836699rWarJ8dRN?wsSecret=d463f474e6b8d233a536670626394c25&wsTime=60b47df5&wsSeek=off&wm=0&tw=0&roirecognition=0&record=flv&origin=tct"),
     )
