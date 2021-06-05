@@ -14,14 +14,12 @@ import java.nio.FloatBuffer
 abstract class AbstractFilter(
     ctx: Context,
     private val vertexShaderId: Int = R.raw.base_vert,
-    private val fragmentShaderId: Int =R.raw.base_frag,
-    private val name:String = ""
+    private val fragmentShaderId: Int = R.raw.base_frag,
+    private val name: String = "",
 ) {
     private val context: Context = ctx.applicationContext
     private val vertexBuffer: FloatBuffer // 顶点坐标缓冲区
     private val textureBuffer: FloatBuffer // 纹理坐标
-    private var width: Int = 0
-    private var height: Int = 0
 
     protected var program: Int = 0
     private var vPosition: Int = 0
@@ -37,11 +35,6 @@ abstract class AbstractFilter(
         initGL(context)
     }
 
-    open fun setSize(width: Int, height: Int) {
-        this.width = width
-        this.height = height
-    }
-
     private fun initCoord() {
         vertexBuffer.clear()
         vertexBuffer.put(VERTEX)
@@ -50,7 +43,7 @@ abstract class AbstractFilter(
     }
 
     private fun initGL(context: Context) {
-        Log.i("_opengl_","name = $name -> initGL")
+        //Log.i("_opengl_", "name = $name -> initGL")
         val vertexSharder = OpenGLUtils.readRawTextFile(context, vertexShaderId)
         val fragSharder = OpenGLUtils.readRawTextFile(context, fragmentShaderId)
         program = OpenGLUtils.loadProgram(vertexSharder, fragSharder)
@@ -59,9 +52,12 @@ abstract class AbstractFilter(
         vTexture = GLES20.glGetUniformLocation(program, SHADER_KEY_V_TEXTURE)
     }
 
-    open fun onDraw(texture: Int): Int {
+    open fun onDraw(texture: Int, chain: FilterChain): Int {
+        val chainContext = chain.chainContext
+        Log.i("_opengl_",
+            "AbstractFilter::onDraw ${name} ${chain.index} size = ${chain.filters.size} ${chainContext.width} * ${chainContext.height}")
         // 设置绘制区域
-        GLES20.glViewport(0, 0, width, height)
+        GLES20.glViewport(0, 0, chainContext.width, chainContext.height)
         GLES20.glUseProgram(program)
 
         vertexBuffer.position(0)
@@ -95,7 +91,7 @@ abstract class AbstractFilter(
         GLES20.glDeleteProgram(program)
     }
 
-    open fun onBeforeDraw(){}
+    open fun onBeforeDraw() {}
 
     companion object {
         val VERTEX: FloatArray = floatArrayOf(

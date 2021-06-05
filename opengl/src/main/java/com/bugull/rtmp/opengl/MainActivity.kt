@@ -35,7 +35,6 @@ class MainActivity : AppCompatActivity() {
         }
         val cameraView = findViewById<CameraView>(R.id.camera)
 
-
         findViewById<AppCompatCheckBox>(R.id.btn_start).setOnClickListener {
             if (!start) {
                 start = true

@@ -15,12 +15,35 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        externalNativeBuild {
+            // bianyi
+            cmake {
+                cppFlags ""
+                // 不能解决的原因是:添加的构建参数,是影响动态链接库编译过程的,而引入第三方so包,是已经编译完成的.
+                // https://www.freesion.com/article/5401909208/
+                arguments '-DANDROID_STL=c++_shared'
+                abiFilters "armeabi-v7a"
+            }
+        }
+
+        // dabao
+        ndk {
+            abiFilters "armeabi-v7a"
+        }
     }
 
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt"
+            version "3.10.2"
         }
     }
     compileOptions {
@@ -30,7 +53,15 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+
+    /*sourceSets {
+        main {
+            jniLibs.srcDirs = ['jniLibs']
+        }
+    }*/
 }
+
+
 
 dependencies {
 

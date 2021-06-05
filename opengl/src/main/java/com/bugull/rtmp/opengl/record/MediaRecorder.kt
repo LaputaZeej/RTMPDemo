@@ -9,6 +9,7 @@ import android.view.Surface
 import com.bugull.rtmp.opengl.DEFAULT_H
 import com.bugull.rtmp.opengl.DEFAULT_W
 import com.bugull.rtmp.opengl.TAG
+import com.bugull.rtmp.opengl.filter.FilterChain
 import java.io.IOException
 import java.nio.ByteBuffer
 
@@ -23,7 +24,7 @@ class MediaRecorder(
     private val width: Int = DEFAULT_W,
     private val height: Int = DEFAULT_H,
 ) {
-    private val context = ctx.applicationContext
+    private val context = ctx
     private var mMediaCodec: MediaCodec? = null
     private var mMediaMuxer: MediaMuxer? = null
     private var mSurface: Surface? = null
@@ -110,6 +111,7 @@ class MediaRecorder(
         mHandler = Handler(handlerThread.looper)
         mHandler?.post {
             if (mSurface != null) {
+                Log.i("_opengl_create", "width=$width height = $height")
                 eglEnv = EGLEnv(context, glContext, mSurface!!, width, height)
             }
             start = true
@@ -142,7 +144,7 @@ class MediaRecorder(
             }
             while (true) {
 
-                if(!start){
+                if (!start) {
                     break
                 }
                 Log.i(TAG, "    MediaRecorder::codec ing ... $start")
@@ -223,7 +225,7 @@ class MediaRecorder(
             mMediaMuxer = null
             mSurface = null
             mHandler = null
-            mLastTimeStamp=0
+            mLastTimeStamp = 0
         }
     }
 

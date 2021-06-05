@@ -4,17 +4,27 @@ import android.content.Context
 import android.graphics.SurfaceTexture
 import android.opengl.EGL14
 import android.opengl.GLSurfaceView
+import android.os.Handler
+import android.os.HandlerThread
+import android.system.Os.bind
 import android.util.AttributeSet
 import android.util.Log
 import android.util.Size
 import android.view.SurfaceHolder
-import androidx.camera.core.CameraX
-import androidx.camera.core.Preview
-import androidx.camera.core.PreviewConfig
+import androidx.camera.core.*
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import com.bugull.rtmp.opengl.face.Face
+import com.bugull.rtmp.opengl.face.FaceTracker
+import com.bugull.rtmp.opengl.filter.BigEyeFilter
 import com.bugull.rtmp.opengl.filter.CameraFilter
+import com.bugull.rtmp.opengl.filter.FilterChain
 import com.bugull.rtmp.opengl.filter.ScreenFilter
 import com.bugull.rtmp.opengl.record.MediaRecorder
+import com.bugull.rtmp.opengl.util.ImageUtils
+import java.util.concurrent.Executors
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 import kotlin.jvm.Throws
@@ -48,15 +58,21 @@ class CameraView(context: Context?, attrs: AttributeSet?) : GLSurfaceView(contex
     /**
      * Render
      */
-    class CameraRender(private val view: CameraView) : Renderer {
+    class CameraRender(private val view: CameraView) : Renderer, LifecycleEventObserver {
         private val mtx: FloatArray = FloatArray(16)
         private var textures: IntArray = intArrayOf()
         private var mSurfaceTexture: SurfaceTexture? = null
-        private var mCameraFilter: CameraFilter? = null
-        private var mScreenFilter: ScreenFilter? = null
         private var mMediaRecorder: MediaRecorder? = null
+        private var mFilterChain: FilterChain? = null
+
+        private val handlerThread = HandlerThread("ImageAnalysis")
+        private var mFaceTracker: FaceTracker? = null
+        private val mFaceTrackerLock = Any()
+        private var mFace: Face? = null
 
         init {
+            (view.context as LifecycleOwner).lifecycle.addObserver(this)
+            handlerThread.start()
             // camera data
             CameraX.bindToLifecycle(view.context as LifecycleOwner, Preview(
                 PreviewConfig.Builder()
@@ -68,12 +84,41 @@ class CameraView(context: Context?, attrs: AttributeSet?) : GLSurfaceView(contex
                     //Log.i("_opengles_", "onUpdated .... $it")
                     mSurfaceTexture = it?.surfaceTexture
                 }
-            })
+            },
+                ImageAnalysis(
+                    ImageAnalysisConfig.Builder()
+                        .setCallbackHandler(Handler(handlerThread.looper))
+                        .setLensFacing(CameraX.LensFacing.BACK)
+                        .setTargetResolution(Size(DEFAULT_H, DEFAULT_W))
+                        .setImageReaderMode(ImageAnalysis.ImageReaderMode.ACQUIRE_LATEST_IMAGE)
+                        .build()
+                ).also {
+                    it.setAnalyzer { imageProxy, rotationDegrees ->
+                        mFaceTracker?.let { ft ->
+                            val bytes = ImageUtils.getBytes(imageProxy)
+                            synchronized(mFaceTrackerLock) {
+                                // 更新人脸眼睛信息
+                                val face = ft.detect(bytes,
+                                    imageProxy.width,
+                                    imageProxy.height,
+                                    rotationDegrees)
+                                mFace = face
+                                Log.i("_opengles_", "setAnalyzer ....$face")
+
+                            }
+                        }
+                    }
+
+                }
+            )
         }
+
+        var callback: ((Throwable) -> Unit)? = null
 
         // Opengl必须在EGL线程中调用 GLThread
 
         override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
+            Log.i("_opengles_", "onFrameAvailable ....")
             // 创建OpenGL 纹理 ,把摄像头的数据与这个纹理关联
             // 当做能在opengl用的一个图片的ID
             textures = IntArray(1)
@@ -86,18 +131,24 @@ class CameraView(context: Context?, attrs: AttributeSet?) : GLSurfaceView(contex
                     //Log.i("_opengles_", "onFrameAvailable ....")
 
                 }
-                mCameraFilter = CameraFilter(view.context)
-                mScreenFilter = ScreenFilter(view.context)
 
-                mMediaRecorder = MediaRecorder(view.context,
+                val fcc = FilterChain.FilterChainContext()
+                mFilterChain = FilterChain(listOf(
+                    CameraFilter(view.context),
+                    BigEyeFilter(view.context),
+                    ScreenFilter(view.context)
+                ), 0, FilterChain.FilterChainContext())
+
+                mMediaRecorder = MediaRecorder(
+                    view.context,
                     "/sdcard/a-${System.currentTimeMillis()}.mp4",
-                    EGL14.eglGetCurrentContext())
+                    EGL14.eglGetCurrentContext()
+                )
             }
         }
 
         override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
-            mCameraFilter?.setSize(width, height)
-            mScreenFilter?.setSize(width, height)
+            mFilterChain?.setSize(width, height)
         }
 
         override fun onDrawFrame(gl: GL10?) {
@@ -106,31 +157,57 @@ class CameraView(context: Context?, attrs: AttributeSet?) : GLSurfaceView(contex
             mSurfaceTexture?.run {
                 updateTexImage()
                 getTransformMatrix(mtx)
-                mCameraFilter?.setTransformMatrix(mtx)
-                mCameraFilter?.onDraw(textures[0])?.let { r1 ->
-                    mScreenFilter?.onDraw(r1)?.let { r2 ->
-                        mMediaRecorder?.fireFrame(r2, timestamp)
+                mFilterChain?.setTransformMatrix(mtx)
+                mFilterChain?.let {
+                    synchronized(mFaceTrackerLock) {
+                        it.setFace(mFace)
                     }
+                }
+                val r = mFilterChain?.proceed(textures[0])
+                r?.run {
+                    mMediaRecorder?.fireFrame(this, timestamp)
                 }
             }
         }
 
         fun onSurfaceDestroyed() {
-            mScreenFilter?.release()
-            mCameraFilter?.release()
+            mFilterChain?.release()
         }
 
         fun startRecord(speed: Float) {
-//            try {
-            mMediaRecorder?.start(speed)
-//            } catch (e: Throwable) {
-//                e.printStackTrace()
-//            }
-
+            try {
+                mMediaRecorder?.start(speed)
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                callback?.invoke(e)
+            }
         }
 
         fun stopRecord() {
             mMediaRecorder?.stop()
+        }
+
+        override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
+            when (event) {
+                Lifecycle.Event.ON_CREATE -> {
+                    // todo 需要从assets 复制到 手机存储内存
+                    mFaceTracker = FaceTracker("/sdcard/lbpcascade_frontalface.xml",
+                        "/sdcard/pd_2_00_pts5.dat")
+                }
+
+                Lifecycle.Event.ON_START -> {
+                    mFaceTracker?.start()
+                }
+
+                Lifecycle.Event.ON_STOP -> {
+                    mFaceTracker?.stop()
+                }
+
+                Lifecycle.Event.ON_DESTROY -> {
+                    mFaceTracker?.release()
+                    (view.context as LifecycleOwner).lifecycle.removeObserver(this)
+                }
+            }
         }
 
 

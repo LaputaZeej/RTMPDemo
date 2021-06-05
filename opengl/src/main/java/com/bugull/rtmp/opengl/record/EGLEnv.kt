@@ -2,7 +2,9 @@ package com.bugull.rtmp.opengl.record
 
 import android.content.Context
 import android.opengl.*
+import android.util.Log
 import android.view.Surface
+import com.bugull.rtmp.opengl.filter.FilterChain
 import com.bugull.rtmp.opengl.filter.RecordFilter
 
 /**
@@ -10,16 +12,17 @@ import com.bugull.rtmp.opengl.filter.RecordFilter
  */
 class EGLEnv(
     val context: Context,
-     mGlContext: EGLContext, // 摄像头的上下文
-     surface: Surface,
-     width: Int,
-     height: Int,
+    mGlContext: EGLContext, // 摄像头的上下文
+    surface: Surface,
+     val width: Int,
+    val height: Int,
 ) {
     private val mEglDisplay: EGLDisplay // 窗口
     private val mEglSurface: EGLSurface // 画布
     private val mEglConfig: EGLConfig // 配置
     private val mEglContext: EGLContext // 上下文 一个是编码的上下文
     private val recordFilter: RecordFilter
+    private val filterChain: FilterChain
 
     init {
         // 获得显示窗口，作为OpenGL的绘制目标
@@ -90,15 +93,17 @@ class EGLEnv(
         if (!EGL14.eglMakeCurrent(mEglDisplay, mEglSurface, mEglSurface, mEglContext)) {
             throw  RuntimeException("EGL error " + EGL14.eglGetError());
         }
-
         recordFilter = RecordFilter(context)
-        recordFilter.setSize(width, height)
+        val s = FilterChain.FilterChainContext().apply {
+            setSize(this@EGLEnv.width, this@EGLEnv.height)
+        }
+        filterChain = FilterChain(listOf(), 0, s)
 
     }
 
     // 往MediaCodec surface填充数据
     fun draw(texture: Int, timestamp: Long) {
-        recordFilter.onDraw(texture)
+        recordFilter.onDraw(texture, filterChain)
         EGLExt.eglPresentationTimeANDROID(mEglDisplay, mEglSurface, timestamp);
         //EGLSurface是双缓冲模式
         EGL14.eglSwapBuffers(mEglDisplay, mEglSurface);
@@ -106,7 +111,10 @@ class EGLEnv(
 
     fun release() {
         EGL14.eglDestroySurface(mEglDisplay, mEglSurface)
-        EGL14.eglMakeCurrent(mEglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT)
+        EGL14.eglMakeCurrent(mEglDisplay,
+            EGL14.EGL_NO_SURFACE,
+            EGL14.EGL_NO_SURFACE,
+            EGL14.EGL_NO_CONTEXT)
         EGL14.eglDestroyContext(mEglDisplay, mEglContext)
         EGL14.eglReleaseThread()
         EGL14.eglTerminate(mEglDisplay)
