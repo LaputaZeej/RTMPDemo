@@ -18,13 +18,13 @@ abstract class AbstractFilter(
     private val name: String = "",
 ) {
     private val context: Context = ctx.applicationContext
-    private val vertexBuffer: FloatBuffer // 顶点坐标缓冲区
-    private val textureBuffer: FloatBuffer // 纹理坐标
+    protected val vertexBuffer: FloatBuffer // 顶点坐标缓冲区
+    protected val textureBuffer: FloatBuffer // 纹理坐标
 
     protected var program: Int = 0
-    private var vPosition: Int = 0
-    private var vCoord: Int = 0
-    private var vTexture: Int = 0
+    protected var vPosition: Int = 0
+    protected var vCoord: Int = 0
+    protected var vTexture: Int = 0
 
     init {
         vertexBuffer =
@@ -83,15 +83,19 @@ abstract class AbstractFilter(
         GLES20.glUniform1i(vTexture, 0)
         onBeforeDraw()
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
+        afterDraw(chainContext)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
         return texture
     }
 
+    protected open fun afterDraw(chainContext: FilterChain.FilterChainContext) {
+    }
+
+    protected open fun onBeforeDraw() {}
+
     open fun release() {
         GLES20.glDeleteProgram(program)
     }
-
-    open fun onBeforeDraw() {}
 
     companion object {
         val VERTEX: FloatArray = floatArrayOf(

@@ -20,19 +20,23 @@ class BigEyeFilter(
     private val vLeftEye: Int
     private val vRightEye: Int
     private val vScale: Int
+    private val vScale2: Int
     private val left: FloatBuffer
     private val right: FloatBuffer
     private val scale: FloatBuffer
+    private val scale2: FloatBuffer
     var face: Face? = null
 
     init {
         left = ByteBuffer.allocateDirect(8).order(ByteOrder.nativeOrder()).asFloatBuffer()
         right = ByteBuffer.allocateDirect(8).order(ByteOrder.nativeOrder()).asFloatBuffer()
         scale = ByteBuffer.allocateDirect(8).order(ByteOrder.nativeOrder()).asFloatBuffer()
+        scale2 = ByteBuffer.allocateDirect(4).order(ByteOrder.nativeOrder()).asFloatBuffer()
 
         vLeftEye = GLES20.glGetUniformLocation(program, "left_eye")
         vRightEye = GLES20.glGetUniformLocation(program, "right_eye")
         vScale = GLES20.glGetUniformLocation(program, "scale")
+        vScale2 = GLES20.glGetUniformLocation(program, "scale2")
 
     }
 
@@ -45,8 +49,8 @@ class BigEyeFilter(
         super.onBeforeDraw()
         Log.i("_opengl_", "---> onBeforeDraw  face = $face")
         face?.let { f ->
-            val x: Float = f.left_x / f.imgWidth
-            val y: Float = 1.0f - f.left_y / f.imgHeight
+            val x: Float = f.left_x / f.imgWidth // 0-1 不需要具体的值 *width
+            val y: Float = 1.0f - f.left_y / f.imgHeight //0-1
             left.clear()
             left.put(x).put(y).position(0)
             GLES20.glUniform2fv(vLeftEye, 1, left)
@@ -60,6 +64,9 @@ class BigEyeFilter(
             scale.clear()
             scale.put(scaleX).put(scaleX).position(0)
             GLES20.glUniform2fv(vScale, 1, scale)
+
+            scale2.clear()
+            GLES20.glUniform1f(vScale2,scaleX)
         }
     }
 }

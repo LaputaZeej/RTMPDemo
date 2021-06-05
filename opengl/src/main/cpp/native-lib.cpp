@@ -8,8 +8,8 @@
 extern "C"
 JNIEXPORT jlong JNICALL
 Java_com_bugull_rtmp_opengl_face_FaceTracker_nativeCreateObject(JNIEnv *env, jobject clazz,
-                                                          jstring facemodel_,
-                                                          jstring landmarkermodel_) {
+                                                                jstring facemodel_,
+                                                                jstring landmarkermodel_) {
     const char *facemodel = env->GetStringUTFChars(facemodel_, 0);
     const char *landmarkermodel = env->GetStringUTFChars(landmarkermodel_, 0);
     LOGI("Java_com_bugull_rtmp_opengl_face_FaceTracker_nativeCreateObject");
@@ -22,7 +22,8 @@ Java_com_bugull_rtmp_opengl_face_FaceTracker_nativeCreateObject(JNIEnv *env, job
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_bugull_rtmp_opengl_face_FaceTracker_nativeDestroyObject(JNIEnv *env, jobject clazz, jlong thiz) {
+Java_com_bugull_rtmp_opengl_face_FaceTracker_nativeDestroyObject(JNIEnv *env, jobject clazz,
+                                                                 jlong thiz) {
     LOGI("Java_com_bugull_rtmp_opengl_face_FaceTracker_nativeDestroyObject");
     if (thiz != 0) {
         FaceTrack *tracker = reinterpret_cast<FaceTrack *>(thiz);
@@ -54,9 +55,9 @@ Java_com_bugull_rtmp_opengl_face_FaceTracker_nativeStop(JNIEnv *env, jobject cla
 extern "C"
 JNIEXPORT jobject JNICALL
 Java_com_bugull_rtmp_opengl_face_FaceTracker_nativeDetect(JNIEnv *env, jobject clazz, jlong thiz,
-                                                    jbyteArray inputImage_,
-                                                    jint width, jint height,
-                                                    jint rotationDegrees) {
+                                                          jbyteArray inputImage_,
+                                                          jint width, jint height,
+                                                          jint rotationDegrees) {
     LOGI("Java_com_bugull_rtmp_opengl_face_FaceTracker_nativeDetect");
     if (thiz == 0) {
         return 0;
@@ -94,14 +95,18 @@ Java_com_bugull_rtmp_opengl_face_FaceTracker_nativeDetect(JNIEnv *env, jobject c
     env->ReleaseByteArrayElements(inputImage_, inputImage, 0);
 
 
-
-    if (!face.empty() && !points.empty()){
+    if (!face.empty() && !points.empty()) {
         LOGI("face ok ..");
         jclass cls = env->FindClass("com/bugull/rtmp/opengl/face/Face");
-        jmethodID construct = env->GetMethodID(cls, "<init>", "(IIIIIIFFFF)V");
+        jmethodID construct = env->GetMethodID(cls, "<init>", "(IIIIIIFFFFFFFFFF)V");
         SeetaPointF left = points[0];
         SeetaPointF right = points[1];
-        jobject obj = env->NewObject(cls, construct, face.width, face.height,w,h, face.x, face.y,(float)left.x,(float)left.y,(float)right.x,(float)right.y);
+        SeetaPointF nose = points[2];
+        SeetaPointF mouse_left = points[3];
+        SeetaPointF mouse_right = points[4];
+        jobject obj = env->NewObject(cls, construct, face.width, face.height, w, h, face.x, face.y,
+                                     left.x, left.y, right.x, right.y, nose.x, nose.y, mouse_left.x,
+                                     mouse_left.y, mouse_right.x, mouse_right.y);
         return obj;
     }
     LOGI("face not ok ..");

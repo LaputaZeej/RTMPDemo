@@ -14,4 +14,10 @@ data class Face(
     val left_y: Float,
     val right_x: Float,
     val right_y: Float,
+    val nose_x: Float,
+    val nose_y: Float,
+    val mouseLeft_x: Float,
+    val mouseLeft_y: Float,
+    val mouseRight_x: Float,
+    val mouseRight_y: Float,
 )

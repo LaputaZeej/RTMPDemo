@@ -18,10 +18,7 @@ import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import com.bugull.rtmp.opengl.face.Face
 import com.bugull.rtmp.opengl.face.FaceTracker
-import com.bugull.rtmp.opengl.filter.BigEyeFilter
-import com.bugull.rtmp.opengl.filter.CameraFilter
-import com.bugull.rtmp.opengl.filter.FilterChain
-import com.bugull.rtmp.opengl.filter.ScreenFilter
+import com.bugull.rtmp.opengl.filter.*
 import com.bugull.rtmp.opengl.record.MediaRecorder
 import com.bugull.rtmp.opengl.util.ImageUtils
 import java.util.concurrent.Executors
@@ -119,6 +116,9 @@ class CameraView(context: Context?, attrs: AttributeSet?) : GLSurfaceView(contex
 
         override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
             Log.i("_opengles_", "onFrameAvailable ....")
+            // 显示画布的宽高
+            // ！！可能与处理图片的宽度不一致
+
             // 创建OpenGL 纹理 ,把摄像头的数据与这个纹理关联
             // 当做能在opengl用的一个图片的ID
             textures = IntArray(1)
@@ -136,6 +136,7 @@ class CameraView(context: Context?, attrs: AttributeSet?) : GLSurfaceView(contex
                 mFilterChain = FilterChain(listOf(
                     CameraFilter(view.context),
                     BigEyeFilter(view.context),
+                    StickFilter(view.context),
                     ScreenFilter(view.context)
                 ), 0, FilterChain.FilterChainContext())
 
