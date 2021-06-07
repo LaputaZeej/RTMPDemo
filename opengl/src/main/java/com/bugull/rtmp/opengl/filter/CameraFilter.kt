@@ -26,7 +26,8 @@ class CameraFilter(ctx: Context) :
         return r
     }
 
-    override fun onBeforeDraw() {
+    override fun onBeforeDraw(chainContext: FilterChain.FilterChainContext) {
+        super.onBeforeDraw(chainContext)
         //if (mtx.isEmpty()) return
         GLES20.glUniformMatrix4fv(vMatrix, 1, false, mtx, 0)
     }

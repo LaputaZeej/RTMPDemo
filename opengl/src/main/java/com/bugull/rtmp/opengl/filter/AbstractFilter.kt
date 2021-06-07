@@ -81,17 +81,17 @@ abstract class AbstractFilter(
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture)
         GLES20.glUniform1i(vTexture, 0)
-        onBeforeDraw()
+        onBeforeDraw(chainContext)
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
         afterDraw(chainContext)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
         return texture
     }
 
-    protected open fun afterDraw(chainContext: FilterChain.FilterChainContext) {
+    open fun afterDraw(chainContext: FilterChain.FilterChainContext) {
     }
 
-    protected open fun onBeforeDraw() {}
+    open fun onBeforeDraw(chainContext: FilterChain.FilterChainContext) {}
 
     open fun release() {
         GLES20.glDeleteProgram(program)

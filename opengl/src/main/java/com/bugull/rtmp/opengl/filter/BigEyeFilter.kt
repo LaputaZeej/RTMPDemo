@@ -45,8 +45,8 @@ class BigEyeFilter(
         return super.onDraw(texture, chain)
     }
 
-    override fun onBeforeDraw() {
-        super.onBeforeDraw()
+    override fun onBeforeDraw(chainContext: FilterChain.FilterChainContext) {
+        super.onBeforeDraw(chainContext)
         Log.i("_opengl_", "---> onBeforeDraw  face = $face")
         face?.let { f ->
             val x: Float = f.left_x / f.imgWidth // 0-1 不需要具体的值 *width

@@ -123,8 +123,12 @@ void *connect(void *args) {
         // 开启一个线程，检测连接状态
         pthread_create(&connectStatePid, 0, checkConnectState, 0);
         //pthread_exit(&pid);
+        if (startTime!=0){
+            startTime = RTMP_GetTime();
+        }
     }
-    startTime = RTMP_GetTime();
+
+
     return 0;
 }
 

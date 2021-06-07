@@ -6,7 +6,6 @@ import android.opengl.EGL14
 import android.opengl.GLSurfaceView
 import android.os.Handler
 import android.os.HandlerThread
-import android.system.Os.bind
 import android.util.AttributeSet
 import android.util.Log
 import android.util.Size
@@ -14,17 +13,16 @@ import android.view.SurfaceHolder
 import androidx.camera.core.*
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import com.bugull.rtmp.opengl.face.Face
 import com.bugull.rtmp.opengl.face.FaceTracker
 import com.bugull.rtmp.opengl.filter.*
+import com.bugull.rtmp.opengl.filter.abs.SoulFilter
+import com.bugull.rtmp.opengl.filter.beauty.BeautyFilter
 import com.bugull.rtmp.opengl.record.MediaRecorder
 import com.bugull.rtmp.opengl.util.ImageUtils
-import java.util.concurrent.Executors
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
-import kotlin.jvm.Throws
 
 /**
  * Author by xpl, Date on 2021/6/1.
@@ -132,11 +130,13 @@ class CameraView(context: Context?, attrs: AttributeSet?) : GLSurfaceView(contex
 
                 }
 
-                val fcc = FilterChain.FilterChainContext()
                 mFilterChain = FilterChain(listOf(
                     CameraFilter(view.context),
                     BigEyeFilter(view.context),
                     StickFilter(view.context),
+                    // BeautyFilter(view.context), // TODO 开启保存会有问题
+                    SoulFilter(view.context),
+                    SplitFilter(view.context),
                     ScreenFilter(view.context)
                 ), 0, FilterChain.FilterChainContext())
 
