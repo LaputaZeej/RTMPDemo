@@ -18,6 +18,8 @@ class StickFilter(
     private var texturesPic: IntArray = IntArray(1) // 贴图纹理
 
     init {
+//        textureBuffer.clear()
+//        textureBuffer.put(TEXURE_180)
         OpenGLUtils.glGenTextures(texturesPic)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texturesPic[0])
         val pic = BitmapFactory.decodeResource(ctx.resources, R.drawable.love)

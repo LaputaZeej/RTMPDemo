@@ -9,17 +9,33 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
-abstract class PathActivity(private val permissions: Array<String>) : AppCompatActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_path)
+class PathFragment(
+    private val permissions: Array<String>,
+    private val onPathClick: (PathData) -> Unit,
+) : Fragment() {
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?,
+    ): View? {
+        return LayoutInflater.from(requireContext()).inflate(R.layout.activity_path, null, false)
+            .apply {
+                this.initView()
+
+            }
+
+    }
+
+    private fun View.initView() {
         findViewById<RecyclerView>(R.id.recycler).apply {
-            layoutManager = LinearLayoutManager(this@PathActivity)
-            addItemDecoration(DividerItemDecoration(this@PathActivity,
+            layoutManager = LinearLayoutManager(requireContext())
+            addItemDecoration(DividerItemDecoration(requireContext(),
                 DividerItemDecoration.VERTICAL))
             adapter = PathAdapter(defaultPathList) {
 
@@ -27,7 +43,7 @@ abstract class PathActivity(private val permissions: Array<String>) : AppCompatA
                     onPathClick(it)
                 } else {
                     ActivityCompat.requestPermissions(
-                        this@PathActivity, permissions, 0x99
+                        requireActivity(), permissions, 0x99
                     )
                 }
             }
@@ -36,12 +52,9 @@ abstract class PathActivity(private val permissions: Array<String>) : AppCompatA
 
     private fun allPermissionsGranted(list: Array<String>) = list.all {
         ContextCompat.checkSelfPermission(
-            baseContext, it
+            requireActivity(), it
         ) == PackageManager.PERMISSION_GRANTED
     }
-
-
-    abstract fun onPathClick(it: PathData)
 
     private val defaultPathList = listOf(
         PathData("本地1", "rtmp://192.168.199.144/laputa/abcd"),
@@ -50,7 +63,6 @@ abstract class PathActivity(private val permissions: Array<String>) : AppCompatA
         PathData("斗鱼(直播码会刷新)",
             "rtmp://sendtc3a.douyu.com/live/9836699rWarJ8dRN?wsSecret=d463f474e6b8d233a536670626394c25&wsTime=60b47df5&wsSeek=off&wm=0&tw=0&roirecognition=0&record=flv&origin=tct"),
     )
-
 
 
     private class PathAdapter(

@@ -112,6 +112,13 @@ abstract class AbstractFilter(
             1.0f, 1.0f
         )
 
+        val TEXURE_180: FloatArray = floatArrayOf(
+            0.0f, 1.0f,
+            1.0f, 1.0f,
+            0.0f, 0.0f,
+            1.0f, 0.0f
+        )
+
         internal const val SHADER_KEY_V_POSITION = "vPosition"
         internal const val SHADER_KEY_V_COORD = "vCoord"
         internal const val SHADER_KEY_V_TEXTURE = "vTexture"

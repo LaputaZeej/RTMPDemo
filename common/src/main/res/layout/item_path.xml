@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:orientation="horizontal"
     android:padding="24dp"
-    tools:context=".PathActivity">
+    tools:context=".PathFragment">
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/tv_name"

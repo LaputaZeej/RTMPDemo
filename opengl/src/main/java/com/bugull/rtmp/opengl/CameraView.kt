@@ -92,6 +92,7 @@ class CameraView(context: Context?, attrs: AttributeSet?) : GLSurfaceView(contex
                         mFaceTracker?.let { ft ->
                             val bytes = ImageUtils.getBytes(imageProxy)
                             synchronized(mFaceTrackerLock) {
+                                if (mFaceTracker == null) return@let
                                 // 更新人脸眼睛信息
                                 val face = ft.detect(bytes,
                                     imageProxy.width,
@@ -134,15 +135,15 @@ class CameraView(context: Context?, attrs: AttributeSet?) : GLSurfaceView(contex
                     CameraFilter(view.context),
                     BigEyeFilter(view.context),
                     StickFilter(view.context),
-                    // BeautyFilter(view.context), // TODO 开启保存会有问题
-                    SoulFilter(view.context),
-                    SplitFilter(view.context),
+                    BeautyFilter(view.context), // TODO 开启保存会有问题
+//                    SoulFilter(view.context),
+//                    SplitFilter(view.context),
                     ScreenFilter(view.context)
                 ), 0, FilterChain.FilterChainContext())
 
                 mMediaRecorder = MediaRecorder(
                     view.context,
-                    "/sdcard/a-${System.currentTimeMillis()}.mp4",
+                    view.context.savePath,
                     EGL14.eglGetCurrentContext()
                 )
             }
@@ -192,8 +193,9 @@ class CameraView(context: Context?, attrs: AttributeSet?) : GLSurfaceView(contex
             when (event) {
                 Lifecycle.Event.ON_CREATE -> {
                     // todo 需要从assets 复制到 手机存储内存
-                    mFaceTracker = FaceTracker("/sdcard/lbpcascade_frontalface.xml",
-                        "/sdcard/pd_2_00_pts5.dat")
+                    val s1 = view.context.path_face_01
+                    val s2 = view.context.path_face_02
+                    mFaceTracker = FaceTracker(s1, s2)
                 }
 
                 Lifecycle.Event.ON_START -> {
@@ -206,6 +208,7 @@ class CameraView(context: Context?, attrs: AttributeSet?) : GLSurfaceView(contex
 
                 Lifecycle.Event.ON_DESTROY -> {
                     mFaceTracker?.release()
+                    mFaceTracker = null
                     (view.context as LifecycleOwner).lifecycle.removeObserver(this)
                 }
             }

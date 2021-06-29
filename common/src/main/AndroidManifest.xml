@@ -3,7 +3,6 @@
     package="com.bugull.rtmp.common">
 
     <application>
-        <activity android:name=".PathActivity"></activity>
     </application>
 
 </manifest>

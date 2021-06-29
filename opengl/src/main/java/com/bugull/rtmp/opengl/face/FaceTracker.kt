@@ -1,5 +1,7 @@
 package com.bugull.rtmp.opengl.face
 
+import android.annotation.SuppressLint
+
 /**
  * Author by xpl, Date on 2021/6/4.
  */
@@ -27,6 +29,11 @@ class FaceTracker(faceModel: String, landmarkerModel: String) {
         init {
             System.loadLibrary("FaceTracker")
         }
+
+        @SuppressLint("SdCardPath")
+        const val S1 = "/sdcard/lbpcascade_frontalface.xml"
+        @SuppressLint("SdCardPath")
+        const val S2 = "/sdcard/pd_2_00_pts5.dat"
     }
 
     external fun nativeCreateObject(faceModel: String, landmarkerModel: String): Long
@@ -40,4 +47,6 @@ class FaceTracker(faceModel: String, landmarkerModel: String) {
         heigh: Int,
         rotationDegrees: Int,
     ): Face
+
+
 }

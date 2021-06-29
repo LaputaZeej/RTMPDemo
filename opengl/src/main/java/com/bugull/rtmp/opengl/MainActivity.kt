@@ -14,25 +14,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         updateButton()
-        if (ActivityCompat.checkSelfPermission(this,
-                android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(this,
-                arrayOf(android.Manifest.permission.CAMERA),
-                0x99)
-        } else {
 
-        }
-
-        if (ActivityCompat.checkSelfPermission(this,
-                android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(this,
-                arrayOf(android.Manifest.permission.WRITE_EXTERNAL_STORAGE),
-                0x88)
-        } else {
-
-        }
         val cameraView = findViewById<CameraView>(R.id.camera)
 
         findViewById<AppCompatCheckBox>(R.id.btn_start).setOnClickListener {
