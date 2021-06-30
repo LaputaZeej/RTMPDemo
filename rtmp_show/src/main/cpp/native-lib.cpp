@@ -6,6 +6,7 @@
 #include "librtmp/rtmp_sys.h"
 #include <stdint.h>
 #include <math.h>
+#include "H264.h"
 
 
 JavaVM *javaVm = 0;
@@ -80,8 +81,8 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_bugull_rtmp_rtmp_rtmp_SaveRTMP_nativeSaveRtmp(JNIEnv *env, jobject thiz, jstring url,
-                                                       jstring path) {
+Java_com_bugull_rtmp_rtmp_rtmp_RTMPHelper_nativeSaveRtmp(JNIEnv *env, jobject thiz, jstring url,
+                                                         jstring path) {
 
     RTMP_LogPrintf("_RTMP_log___", "开始保存");
     const char *_path = env->GetStringUTFChars(path, 0);
@@ -179,7 +180,7 @@ Java_com_bugull_rtmp_rtmp_rtmp_SaveRTMP_nativeSaveRtmp(JNIEnv *env, jobject thiz
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_bugull_rtmp_rtmp_rtmp_SaveRTMP_nativeClose(JNIEnv *env, jobject thiz) {
+Java_com_bugull_rtmp_rtmp_rtmp_RTMPHelper_nativeClose(JNIEnv *env, jobject thiz) {
     start = 0;
 }
 
@@ -189,8 +190,8 @@ Java_com_bugull_rtmp_rtmp_rtmp_SaveRTMP_nativeClose(JNIEnv *env, jobject thiz) {
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_bugull_rtmp_rtmp_rtmp_SaveRTMP_nativeSendRtmp(JNIEnv *env, jobject thiz, jstring url,
-                                                       jstring path) {
+Java_com_bugull_rtmp_rtmp_rtmp_RTMPHelper_nativeSendRtmp(JNIEnv *env, jobject thiz, jstring url,
+                                                         jstring path) {
     LOGI("%s start send ...", TAG);
     const char *url_ = env->GetStringUTFChars(url, 0);
     char *sendUrl = new char[strlen(url_) + 1];
@@ -401,4 +402,53 @@ Java_com_bugull_rtmp_rtmp_rtmp_SaveRTMP_nativeSendRtmp(JNIEnv *env, jobject thiz
     sendPath = 0;
     delete[] sendUrl;
     sendUrl = 0;
+}
+
+FILE *fp_send_264;
+
+int read_buffer(unsigned char *buf, int size) {
+    if (!feof(fp_send_264)) {
+        LOG("   -> send h264 read_buffer3333 ");
+        int true_size = fread(buf, 1, size, fp_send_264);
+        LOG("   -> send h264 read_buffer4444 %d ",true_size);
+        return true_size;
+    } else {
+        LOG("   -> send h264 read_buffer5555 %d ",-1);
+        return -1;
+    }
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_bugull_rtmp_rtmp_rtmp_RTMPHelper_nativeSendRtmpH264(JNIEnv *env, jobject thiz, jstring url,
+                                                             jstring path) {
+    LOG("send h264...");
+    const char *url_ = env->GetStringUTFChars(url, 0);
+    char *sendUrl = new char[strlen(url_) + 1];
+    strcpy(sendUrl, url_);
+    env->ReleaseStringUTFChars(url, url_);
+    const char *path_ = env->GetStringUTFChars(path, 0);
+    char *sendPath = new char[strlen(path_) + 1];
+    strcpy(sendPath, path_);
+    env->ReleaseStringUTFChars(path, path_);
+
+    LOG("send h264. url = %s , path = %s", sendUrl, sendPath);
+    fp_send_264 = fopen(sendPath, "rb");
+    if (!fp_send_264) {
+        LOGI("open file error : %p \n",  fp_send_264);
+        delete[] sendUrl;
+        sendUrl = 0;
+        delete[] sendPath;
+        sendPath = 0;
+        return;
+    }
+    int ret = RTMP264_Connect(sendUrl);
+    if (!ret) {
+        LOG("send h264 RTMP264_Connect fail");
+        return;
+    }
+
+    RTMP264_Send(read_buffer);
+
+    RTMP264_Close();
 }

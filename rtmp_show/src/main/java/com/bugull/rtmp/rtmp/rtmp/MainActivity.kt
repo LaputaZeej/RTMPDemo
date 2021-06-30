@@ -4,14 +4,13 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import com.bugull.rtmp.common.PathFragment
 
 class MainActivity : FragmentActivity() {
-    private val saveRtmp = SaveRTMP()
+    private val saveRtmp = RTMPHelper()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -21,7 +20,7 @@ class MainActivity : FragmentActivity() {
         findViewById<View>(R.id.url).setOnClickListener {
             Thread {
                 saveRtmp.saveRtmp("rtmp://192.168.199.144/laputa/abcd",
-                    applicationContext.filesDir.absolutePath + "/av.flv")
+                    applicationContext.filesDir.absolutePath + "/nice.flv")
             }.start()
 
         }
@@ -29,7 +28,15 @@ class MainActivity : FragmentActivity() {
         findViewById<View>(R.id.send).setOnClickListener {
             Thread {
                 saveRtmp.sendRtmp("rtmp://192.168.199.144/laputa/abcd",
-                    applicationContext.filesDir.absolutePath + "/av.flv")
+                    applicationContext.filesDir.absolutePath + "/nice02.flv")
+            }.start()
+
+        }
+
+        findViewById<View>(R.id.send_h264).setOnClickListener {
+            Thread {
+                saveRtmp.sendRtmpH264("rtmp://192.168.199.144/laputa/abcd",
+                    applicationContext.filesDir.absolutePath + "/nice01.h264")
             }.start()
 
         }

@@ -8,6 +8,8 @@ add_library(
         native-lib
         SHARED
         native-lib.cpp
+        H264.cpp
+        h264_decode_sps.h
 )
 
 target_link_libraries(
